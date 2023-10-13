@@ -14,12 +14,13 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
         
     
     
+    # Read data into DataFrames
     hubs_df = pd.read_excel(hubs_file)
     eia_storage_df = gpd.read_file(eia_storage_file)
     eia_df = gpd.read_file(eia_file)
     df4 = pd.read_excel(file_4)
-    
-    # Retrieve the API token from the environment variable
+
+    # Retrieve the Mapbox API token from the environment variable
     api_token = os.environ.get("Mapbox_API_Token")
 
     # Check if the API token is available
@@ -27,7 +28,6 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
         print("API Token found")
     else:
         print("API Token not found. Please check the variable name.")
-
 
 
     eia_storage_df
@@ -44,12 +44,18 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
     eia_storage_df = eia_storage_df[(eia_storage_df['Longitude'] < -100)]
 
 
+    #Converting units to BCF
+    eia_storage_df['base_gas'] = eia_storage_df['base_gas'] /1000000
+    eia_storage_df['work_cap'] = eia_storage_df['work_cap']/1000000
+    eia_storage_df['fld_cap'] = eia_storage_df['fld_cap']/1000000
+    eia_storage_df['maxdeliv'] = eia_storage_df['maxdeliv']/1000000
+
     # Select the columns you want to format
     columns_to_format = ['base_gas', 'work_cap', 'fld_cap', 'maxdeliv']
 
     # Apply formatting to the selected columns
     formatted_df = eia_storage_df.copy()  # Create a copy to avoid modifying the original DataFrame
-    formatted_df[columns_to_format] = formatted_df[columns_to_format].applymap('{:,.0f}'.format)
+    formatted_df[columns_to_format] = formatted_df[columns_to_format].applymap('{:,.3f}'.format)
 
     # Display the formatted DataFrame
     formatted_df
@@ -86,7 +92,7 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
 
     df4
     df4_copy = df4.copy()
-    df4_copy['Working Gas Capacity (MMcf)'] = df4_copy['Working Gas Capacity (MMcf)'].apply('{:,.0f}'.format)
+    df4_copy['Working Gas Capacity (BCF)'] = df4_copy['Working Gas Capacity (BCF)'].apply('{:,.0f}'.format)
     df4_copy.rename(columns={'Owner Name (Company)':'Company'}, inplace=True)
     df4_copy
 
@@ -162,13 +168,13 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
         lon='Longitude',
         color='Field Type',
         hover_name='Company',
-        hover_data=['Field Type', 'Working Gas Capacity (MMcf)'],
+        hover_data=['Field Type', 'Working Gas Capacity (BCF)'],
         color_discrete_sequence=["navy", "red", "green"]
     )
 
     # Define a custom hover template using %{...} placeholders for fig4
     custom_hover_template_fig4 = "<b>Company:</b> %{hovertext}<br>" \
-                                "<b>Working Gas Capacity (MMcf):</b> %{customdata[1]}<br>"
+                                "<b>Working Gas Capacity (BCF):</b> %{customdata[1]}<br>"
 
     # Set the custom hover template for the scatter_mapbox trace in fig4
     fig4.update_traces(
@@ -206,5 +212,5 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
         ))
 
     # Show the combined figure
-    # fig1.show()
+    fig1.show()
     return fig1

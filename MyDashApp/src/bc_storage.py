@@ -19,21 +19,27 @@ def british_columbia_storage(file):
     bc_df = pd.concat(bc_df_names, ignore_index=True)
 
     # Renaming some columns
-    bc_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'GJ'}, inplace=True)
+    bc_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'm3'}, inplace=True)
 
     # Filtering out rows where "UOM" is "Gigajoules"
-    bc_df = bc_df[(bc_df["UOM"] == "Gigajoules") & (bc_df["Date"] >= datetime(2021, 1, 1))]
+    bc_df = bc_df[(bc_df["UOM"] == "Cubic metres") & (bc_df["Date"] >= datetime(2021, 1, 1))]
 
+    bc_df['BCF'] = (bc_df["m3"]/28316846.6)*1000
+    bc_df['Rolling_5_Year_Min_BCF'] = (bc_df["Rolling_5_Year_Min"] / 28316846.6) *1000
+    bc_df['Rolling_5_Year_Max_BCF'] = (bc_df["Rolling_5_Year_max"] / 28316846.6)*1000
+    bc_df['Avg_5_Year_BCF'] = (bc_df["Avg_5_Year"] / 28316846.6)*1000
+    
+    
     # Create custom legend names
     legend_names = {
-        'GJ': 'Current Period',
-        'Rolling_5_Year_Min': '5 Year Minimum',
-        'Rolling_5_Year_max': '5 Year Maximum',
-        'Avg_5_Year': '5 Year Average'    
+        'BCF': 'Current Period',
+        'Rolling_5_Year_Min_BCF': '5 Year Minimum',
+        'Rolling_5_Year_Max_BCF': '5 Year Maximum',
+        'Avg_5_Year_BCF': '5 Year Average'    
     }
 
     # Create the figure
-    fig3 = px.line(bc_df, x='Date', y=['GJ', 'Rolling_5_Year_Min', 'Rolling_5_Year_max','Avg_5_Year'], facet_row='Storage',
+    fig3 = px.line(bc_df, x='Date', y=['Rolling_5_Year_Min_BCF', 'Rolling_5_Year_Max_BCF','Avg_5_Year_BCF','BCF'], facet_row='Storage',
                 title="British Columbia Natural Gas Storage",
                 facet_row_spacing=0.0, facet_col_spacing=0.0, facet_col_wrap=3)
 
@@ -54,7 +60,7 @@ def british_columbia_storage(file):
 
     # Customize hovertemplate to show only the 'value'
     fig3.update_traces(hovertemplate='<b>Date</b>: %{x}<br>'
-                                    '<b>Value (GJ)</b>: %{y}<br>')
+                                    '<b>Value (BCF)</b>: %{y}<br>')
 
     # Update trace names with custom legend names
     for trace in fig3.data:
@@ -62,7 +68,7 @@ def british_columbia_storage(file):
 
     # Update x-axis and y-axis titles
     # fig2.update_xaxes(title_text="Date")
-    fig3.update_yaxes(title_text="GJ")
+    fig3.update_yaxes(title_text="BCF")
 
     # Move the legend to the bottom
     fig3.update_layout(legend=dict(x=0, y=-0.2, orientation="h"))
@@ -71,7 +77,7 @@ def british_columbia_storage(file):
 
     fig3.update_traces(selector=dict(name='5 Year Average'), line=dict(color='navy'))
     fig3.update_traces(selector=dict(name='5 Year Minimum'), line=dict(color='red'))
-    fig3.update_traces(selector=dict(name='GJ'), line=dict(color='blue'))
+    fig3.update_traces(selector=dict(name='BCF'), line=dict(color='blue'))
     fig3.update_traces(selector=dict(name='5 Year Maximum'), line=dict(color='green'))
 
 

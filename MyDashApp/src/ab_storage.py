@@ -4,7 +4,7 @@ from datetime import datetime
 import plotly.express as px
 
 #file
-# file = r'MyDashApp\filtered_storage_data.xlsx'
+file1 = r'MyDashApp\filtered_storage_data.xlsx'
 
 def alberta_storage(file):
     #Alberta dataframes
@@ -19,22 +19,28 @@ def alberta_storage(file):
     ab_df = pd.concat(ab_df_names, ignore_index=True)
 
     # Renaming some columns
-    ab_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'GJ'}, inplace=True)
+    ab_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'm3'}, inplace=True)
 
-    # Filtering out rows where "UOM" is "Gigajoules" and the "Date" is after January 1, 2021
-    ab_df = ab_df[(ab_df["UOM"] == "Gigajoules") & (ab_df["Date"] >= datetime(2021, 1, 1))]
-
-
+    # Filtering out rows where "UOM" is "m3" and the "Date" is after January 1, 2021
+    ab_df = ab_df[(ab_df["UOM"] == "Cubic metres") & (ab_df["Date"] >= datetime(2021, 1, 1))]
+    
+    # Converting m3 to BCF 
+    ab_df['BCF'] = (ab_df["m3"]/28316846.6)*1000
+    ab_df['Rolling_5_Year_Min_BCF'] = (ab_df["Rolling_5_Year_Min"] / 28316846.6) *1000
+    ab_df['Rolling_5_Year_Max_BCF'] = (ab_df["Rolling_5_Year_max"] / 28316846.6)*1000
+    ab_df['Avg_5_Year_BCF'] = (ab_df["Avg_5_Year"] / 28316846.6)*1000
+    
+    
     # Create custom legend names
     legend_names = {
-        'GJ': 'Current Period',
-        'Rolling_5_Year_Min': '5 Year Minimum',
-        'Rolling_5_Year_max': '5 Year Maximum',
-        'Avg_5_Year': '5 Year Average'    
+        'BCF': 'Current Period',
+        'Rolling_5_Year_Min_BCF': '5 Year Minimum',
+        'Rolling_5_Year_Max_BCF': '5 Year Maximum',
+        'Avg_5_Year_BCF': '5 Year Average'    
     }
 
     # Create the figure
-    fig2 = px.line(ab_df, x='Date', y=['GJ', 'Rolling_5_Year_Min', 'Rolling_5_Year_max','Avg_5_Year'], facet_row='Storage',
+    fig2 = px.line(ab_df, x='Date', y=['Rolling_5_Year_Min_BCF', 'Rolling_5_Year_Max_BCF','Avg_5_Year_BCF','BCF'], facet_row='Storage',
                 title="Alberta Natural Gas Storage",
                 facet_row_spacing=0.0, facet_col_spacing=0.0, facet_col_wrap=3)
 
@@ -55,7 +61,7 @@ def alberta_storage(file):
 
     # Customize hovertemplate to show only the 'value'
     fig2.update_traces(hovertemplate='<b>Date</b>: %{x}<br>'
-                                    '<b>Value (GJ)</b>: %{y}<br>')
+                                    '<b>Value (BCF)</b>: %{y}<br>')
 
     # Update trace names with custom legend names
     for trace in fig2.data:
@@ -63,7 +69,7 @@ def alberta_storage(file):
 
     # Update x-axis and y-axis titles
     # fig2.update_xaxes(title_text="Date")
-    fig2.update_yaxes(title_text="GJ")
+    fig2.update_yaxes(title_text="BCF")
 
     # Move the legend to the bottom
     fig2.update_layout(legend=dict(x=0, y=-0.2, orientation="h"))
@@ -71,10 +77,10 @@ def alberta_storage(file):
     # Change the color of the "5 Year Average" line to pink
     fig2.update_traces(selector=dict(name='5 Year Average'), line=dict(color='navy'))
     fig2.update_traces(selector=dict(name='5 Year Minimum'), line=dict(color='red'))
-    fig2.update_traces(selector=dict(name='GJ'), line=dict(color='blue'))
+    fig2.update_traces(selector=dict(name='BCF'), line=dict(color='blue'))
     fig2.update_traces(selector=dict(name='5 Year Maximum'), line=dict(color='green'))
 
     #Showing the fig
     # fig2.show()
     return fig2
-  
+alberta_storage(file1)   

@@ -25,28 +25,27 @@ def western_storage(file):
     ab_df = pd.concat(ab_df_names, ignore_index=True)
 
     # Renaming some columns
-    ab_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'GJ'}, inplace=True)
+    ab_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'm3'}, inplace=True)
 
-    # Filtering out rows where "UOM" is "Gigajoules" and the "Date" is after January 1, 2021
-    ab_df = ab_df[(ab_df["UOM"] == "Gigajoules") & (ab_df["Date"] >= datetime(2021, 1, 1))]
+    # Filtering out rows where "UOM" is "m3" and the "Date" is after January 1, 2021
+    ab_df = ab_df[(ab_df["UOM"] == "Cubic metres") & (ab_df["Date"] >= datetime(2021, 1, 1))]
+
+
 
     # Combining all the sheets together for 'bc'
     bc_df_names = [bc_open_df, bc_close_df, bc_inv_chg_df]
     bc_df = pd.concat(bc_df_names, ignore_index=True)
 
     # Renaming some columns
-    bc_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'GJ'}, inplace=True)
+    bc_df.rename(columns={'REF_DATE': "Date", 'VALUE': 'm3'}, inplace=True)
 
     # Filtering out rows where "UOM" is "Gigajoules"
-    bc_df = bc_df[(bc_df["UOM"] == "Gigajoules") & (bc_df["Date"] >= datetime(2021, 1, 1))]
-
-
-
+    bc_df = bc_df[(bc_df["UOM"] == "Cubic metres") & (bc_df["Date"] >= datetime(2021, 1, 1))]
 
     ab_df.reset_index(drop=True, inplace=True)
     bc_df.reset_index(drop=True, inplace=True)
-    # 'Rolling_5_Year_Min', 'Rolling_5_Year_max','Avg_5_Year']
-    GJ_df = ab_df["GJ"] + bc_df["GJ"]
+    
+    m3_df = ab_df["m3"] + bc_df["m3"]
     Rolling_5_Year_Min_df = pd.DataFrame(ab_df["Rolling_5_Year_Min"] + bc_df["Rolling_5_Year_Min"])
     Rolling_5_Year_max_df = pd.DataFrame(ab_df["Rolling_5_Year_max"] + bc_df["Rolling_5_Year_max"])
     Avg_5_Year_df = pd.DataFrame(ab_df["Avg_5_Year"] + bc_df["Avg_5_Year"])
@@ -56,22 +55,29 @@ def western_storage(file):
     df_copy1.reset_index(drop=True, inplace=True)
 
 
-    df_western = pd.concat([df_copy1,GJ_df,Rolling_5_Year_Min_df,Rolling_5_Year_max_df,Avg_5_Year_df], axis= 1)
+    df_western = pd.concat([df_copy1,m3_df,Rolling_5_Year_Min_df,Rolling_5_Year_max_df,Avg_5_Year_df], axis= 1)
     df_western
+    
+    df_western['BCF'] = (df_western["m3"] / 28316846.6) * 1000
+    df_western['Rolling_5_Year_Min_BCF'] = (df_western["Rolling_5_Year_Min"] / 28316846.6) * 1000
+    df_western['Rolling_5_Year_Max_BCF'] = (df_western["Rolling_5_Year_max"] / 28316846.6) * 1000
+    df_western['Avg_5_Year_BCF'] = (df_western["Avg_5_Year"] / 28316846.6) * 1000
+
+    
 
     import plotly.express as px
     import plotly.graph_objects as go
 
     # Create custom legend names
     legend_names = {
-        'GJ': 'Current Period',
-        'Rolling_5_Year_Min': '5 Year Minimum',
-        'Rolling_5_Year_max': '5 Year Maximum',
-        'Avg_5_Year': '5 Year Average'    
+        'BCF': 'Current Period',
+        'Rolling_5_Year_Min_BCF': '5 Year Minimum',
+        'Rolling_5_Year_Max_BCF': '5 Year Maximum',
+        'Avg_5_Year_BCF': '5 Year Average'    
     }
 
     # Create the figure
-    fig4 = px.line(df_western, x='Date', y=['GJ', 'Rolling_5_Year_Min', 'Rolling_5_Year_max','Avg_5_Year'], facet_row='Storage',
+    fig4 = px.line(df_western, x='Date', y=['Rolling_5_Year_Min_BCF', 'Rolling_5_Year_Max_BCF','Avg_5_Year_BCF','BCF'], facet_row='Storage',
                 title="Western Canada Natural Gas Storage",
                 facet_row_spacing=0.0, facet_col_spacing=0.0, facet_col_wrap=3)
 
@@ -92,7 +98,7 @@ def western_storage(file):
 
     # Customize hovertemplate to show only the 'value'
     fig4.update_traces(hovertemplate='<b>Date</b>: %{x}<br>'
-                                    '<b>Value (GJ)</b>: %{y}<br>')
+                                    '<b>Value (BCF)</b>: %{y}<br>')
 
     # Update trace names with custom legend names
     for trace in fig4.data:
@@ -100,16 +106,16 @@ def western_storage(file):
 
     # Update x-axis and y-axis titles
     # fig2.update_xaxes(title_text="Date")
-    fig4.update_yaxes(title_text="GJ")
+    fig4.update_yaxes(title_text="BCF")
 
     # Move the legend to the bottom
     fig4.update_layout(legend=dict(x=0, y=-0.2, orientation="h"))
 
     # Change the color of the "5 Year Average" line to pink
-
+    fig4.update_traces(selector=dict(name='BCF'), line=dict(color='blue'))
     fig4.update_traces(selector=dict(name='5 Year Average'), line=dict(color='navy'))
     fig4.update_traces(selector=dict(name='5 Year Minimum'), line=dict(color='red'))
-    fig4.update_traces(selector=dict(name='GJ'), line=dict(color='blue'))
+    # fig4.update_traces(selector=dict(name='BCF'), line=dict(color='blue'))
     fig4.update_traces(selector=dict(name='5 Year Maximum'), line=dict(color='green'))
 
 
