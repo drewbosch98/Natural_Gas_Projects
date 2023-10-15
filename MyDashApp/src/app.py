@@ -25,6 +25,8 @@ from ng_pipeline_map import natural_gas_map
 #intializations
 app = Dash(__name__, title="MyDashApp", external_stylesheets=[dbc.themes.CYBORG])
 
+server = app.server
+
 #storage files
 file1 = r'MyDashApp\filtered_storage_data.xlsx'
 file2 = r'MyDashApp\ngsstats.xlsx'

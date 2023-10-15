@@ -174,7 +174,8 @@ def natural_gas_map(hubs_file,eia_storage_file,eia_file,file_4):
 
     # Define a custom hover template using %{...} placeholders for fig4
     custom_hover_template_fig4 = "<b>Company:</b> %{hovertext}<br>" \
-                                "<b>Working Gas Capacity (BCF):</b> %{customdata[1]}<br>"
+                                "<b>Working Gas Capacity (BCF):</b> %{customdata[1]:.3f}<br>"
+
 
     # Set the custom hover template for the scatter_mapbox trace in fig4
     fig4.update_traces(
